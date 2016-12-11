@@ -6,6 +6,12 @@ module.exports = function(grunt) {
 
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
+    browserify: {
+      main: {
+        src: 'test/main.js',
+        dest: 'build/test-suite-browserify.js'
+      }
+    },
     concat: {
       components: {
         src: [
@@ -224,6 +230,6 @@ module.exports = function(grunt) {
   grunt.registerTask('dev', ['connect', 'watch']);
   grunt.registerTask('test', ['jshint', 'jscs', 'connect', 'saucelabs-mocha']);
   grunt.registerTask('default', ['concat']);
-  grunt.registerTask('build', ['compile', 'concat']);
+  grunt.registerTask('build', ['compile', 'concat', 'browserify']);
 
 };
