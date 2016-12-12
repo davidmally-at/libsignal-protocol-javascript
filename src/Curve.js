@@ -1,7 +1,7 @@
 'use strict';
 
 var Crypto = require('crypto');
-var CurveWrapper = require('./curve25519_wrapper2.js');
+var CurveWrapper = require('./curve25519_wrapper.js');
 
 function validatePrivKey(privKey) {
   if (privKey === undefined || !(privKey instanceof ArrayBuffer) || privKey.byteLength != 32) {

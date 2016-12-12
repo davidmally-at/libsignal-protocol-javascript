@@ -61307,7 +61307,7 @@ module.exports = ChainType;
 'use strict';
 
 var Crypto = require('crypto');
-var CurveWrapper = require('./curve25519_wrapper2.js');
+var CurveWrapper = require('./curve25519_wrapper.js');
 
 function validatePrivKey(privKey) {
   if (privKey === undefined || !(privKey instanceof ArrayBuffer) || privKey.byteLength != 32) {
@@ -61421,7 +61421,7 @@ module.exports = {
   libsignal_Curve_async: libsignal_Curve_async
 };
 
-},{"./curve25519_wrapper2.js":154,"crypto":59}],146:[function(require,module,exports){
+},{"./curve25519_wrapper.js":154,"crypto":59}],146:[function(require,module,exports){
 var Crypto = require('./crypto.js');
 
 function isNonNegativeInteger(n) {

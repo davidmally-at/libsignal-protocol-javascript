@@ -5,7 +5,7 @@
 // (see the Gruntfile's `protos_concat` routine)
 // here we export the loaded protobuf, an object
 //    { WhisperMessage, PreKeyWhisperMessage }
-module.exports = function protobuf () {
+module.exports = function protobuf() {
   'use strict';
   var dcodeIO = require('../build/dcodeIO.js');
 

@@ -14,10 +14,10 @@
 //   - see that we can see those messages here
 
 var work = require('webworkify');
-var Internal = {}
+var Internal = {};
 
 // I am the...workee?
-var origCurve25519 = require('./curve25519_wrapper2.js')//Internal.curve25519_async;
+var origCurve25519 = require('./curve25519_wrapper.js');
 
 Internal.startWorker = function(url) {
   Internal.stopWorker(); // there can be only one

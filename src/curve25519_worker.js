@@ -1,4 +1,4 @@
-var CurveWrapper = require('./curve25519_wrapper2.js')
+var CurveWrapper = require('./curve25519_wrapper.js');
 // I am the worker
 
 module.exports = function (self) {
@@ -9,4 +9,4 @@ module.exports = function (self) {
       self.postMessage({ id: e.data.id, error: error.message });
     });
   };
-}
+};

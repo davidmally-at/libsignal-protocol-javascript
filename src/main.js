@@ -7,4 +7,4 @@ module.exports = {
   // internal stuff
   _crypto: require('./crypto.js'),
   _curve: require('./Curve.js')
-}
+};
