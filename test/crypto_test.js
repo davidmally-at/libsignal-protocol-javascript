@@ -6,7 +6,7 @@
 // window.assert = chai.assert;
 
 var Crypto = require('../src/crypto.js');
-var worker = require('../src/curve25519_worker_manager.js');
+// var worker = require('../src/curve25519_worker_manager.js');
 
 describe("Crypto", function() {
   describe("Encrypt AES-CBC", function() {

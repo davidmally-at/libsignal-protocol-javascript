@@ -1,8 +1,7 @@
 'use strict';
 
 var Internal = Internal || {};
-var TheModule = require('../build/curve25519_concat.js');
-console.log(TheModule)
+var Module = require('../build/curve25519_concat.js');
 
 // Insert some bytes into the emscripten memory and return a pointer
 function _allocate(bytes) {
