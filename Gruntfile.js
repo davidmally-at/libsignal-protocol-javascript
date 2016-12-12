@@ -62,32 +62,6 @@ module.exports = function(grunt) {
         dest: 'build/protobufs_concat.js'
       },
 
-      // TODO build a dist or nah?
-      // libsignalprotocol: {
-      //   src: [
-      //     'build/curve25519_concat.js',
-      //     'src/curve25519_worker_manager.js',
-      //     'build/components_concat.js',
-
-      //     'src/Curve.js',
-      //     'src/crypto.js',
-      //     'src/helpers.js',
-      //     'src/KeyHelper.js',
-      //     'build/protobufs_concat.js',
-      //     'src/SessionRecord.js',
-      //     'src/SignalProtocolAddress.js',
-      //     'src/SessionBuilder.js',
-      //     'src/SessionCipher.js',
-      //     'src/SessionLock.js',
-      //     'src/NumericFingerprint.js'
-      //   ],
-      //   dest: 'dist/libsignal-protocol.js',
-      //   options: {
-      //     banner: ';(function(){\nvar Internal = {};\nwindow.libsignal = {};\n',
-      //     footer: '\n})();'
-      //   }
-
-      // },
       test: {
         src: [
           'node_modules/mocha/mocha.js',
@@ -97,9 +71,6 @@ module.exports = function(grunt) {
           'test/_test.js'
         ],
         dest: 'build/test_lib.js'
-        // options: {
-        //   banner: 'var Internal = {};\nwindow.libsignal = {};\n'
-        // }
       }
     },
     compile: {
@@ -225,10 +196,7 @@ module.exports = function(grunt) {
   });
 
   grunt.registerTask('dev', ['connect', 'watch']);
-  // grunt.registerTask('test', ['jshint', 'jscs', 'connect', 'saucelabs-mocha']);
-  // HACK
-  grunt.registerTask('test', ['connect', 'saucelabs-mocha']);
+  grunt.registerTask('test', ['jshint', 'jscs', 'connect', 'saucelabs-mocha']);
   grunt.registerTask('default', ['concat']);
   grunt.registerTask('build', ['compile', 'concat', 'browserify']);
-
 };

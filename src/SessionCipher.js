@@ -195,7 +195,7 @@ SessionCipher.prototype = {
       }.bind(this));
   },
   doDecryptWhisperMessage: function(messageBytes, session) {
-    if (!messageBytes instanceof ArrayBuffer) {
+    if (!(messageBytes instanceof ArrayBuffer)) {
         throw new Error("Expected messageBytes to be an ArrayBuffer");
     }
     var version = (new Uint8Array(messageBytes))[0];
