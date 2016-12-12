@@ -1,5 +1,7 @@
 'use strict';
 
+var Crypto = require('crypto');
+
 function validatePrivKey(privKey) {
   if (privKey === undefined || !(privKey instanceof ArrayBuffer) || privKey.byteLength != 32) {
     throw new Error("Invalid private key");
@@ -82,7 +84,7 @@ function wrapCurve25519(curve25519) {
 function wrapCurve(curve) {
   return {
     generateKeyPair: function() {
-      var privKey = Internal.crypto.getRandomBytes(32);
+      var privKey = Crypto.crypto.getRandomBytes(32);
       return curve.createKeyPair(privKey);
     },
     createKeyPair: function(privKey) {
@@ -109,5 +111,5 @@ module.exports = {
   Curve:                 curve,
   async:                 async,
   libsignal_Curve:       libsignal_Curve,
-  libsignal_Curve_async: libsignal_Curve_async 
+  libsignal_Curve_async: libsignal_Curve_async
 };

@@ -12,7 +12,7 @@ var Crypto = require('../src/crypto.js');
 var SessionRecord = require('../src/SessionRecord.js');
 var SessionBuilder = require('../src/SessionBuilder.js');
 var textsecure = require('./temp_helpers.js');
-var protobuf = require('../src/protobufs.js')
+var protobuf = require('../build/protobufs_concat.js');
 
 describe('SessionCipher', function() {
     describe('getRemoteRegistrationId', function() {

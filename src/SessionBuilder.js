@@ -3,7 +3,7 @@ var Crypto = require('./crypto.js');
 var SessionRecord = require('./SessionRecord.js');
 var ChainType = require('./ChainType.js');
 var BaseKeyType = require('./BaseKeyType.js');
-var util = require('./helpers.js')
+var util = require('./helpers.js');
 
 function SessionBuilder(storage, remoteAddress) {
   this.remoteAddress = remoteAddress;

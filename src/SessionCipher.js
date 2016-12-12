@@ -2,8 +2,10 @@ var util = require('../src/helpers.js');
 
 var SessionLock = require('./SessionLock.js');
 var SessionRecord = require('./SessionRecord.js');
+var SessionBuilder = require('./SessionBuilder.js');
 var Crypto = require('./crypto.js');
 var ChainType = require('./ChainType.js');
+var protobuf = require('../build/protobufs_concat.js');
 
 function SessionCipher(storage, remoteAddress) {
   this.remoteAddress = remoteAddress;
@@ -29,7 +31,7 @@ SessionCipher.prototype = {
       var address = this.remoteAddress.toString();
       var ourIdentityKey, myRegistrationId, record, session, chain;
 
-      var msg = new Internal.protobuf.WhisperMessage();
+      var msg = new protobuf.WhisperMessage();
 
       return Promise.all([
           this.storage.getIdentityKeyPair(),
@@ -91,7 +93,7 @@ SessionCipher.prototype = {
           }.bind(this));
       }.bind(this)).then(function(message) {
           if (session.pendingPreKey !== undefined) {
-              var preKeyMsg = new Internal.protobuf.PreKeyWhisperMessage();
+              var preKeyMsg = new protobuf.PreKeyWhisperMessage();
               preKeyMsg.identityKey = util.toArrayBuffer(ourIdentityKey.pubKey);
               preKeyMsg.registrationId = myRegistrationId;
 
@@ -162,7 +164,7 @@ SessionCipher.prototype = {
       return SessionLock.queueJobForNumber(this.remoteAddress.toString(), function() {
           var address = this.remoteAddress.toString();
           return this.getRecord(address).then(function(record) {
-              var preKeyProto = Internal.protobuf.PreKeyWhisperMessage.decode(buffer);
+              var preKeyProto = protobuf.PreKeyWhisperMessage.decode(buffer);
               if (!record) {
                   if (preKeyProto.registrationId === undefined) {
                       throw new Error("No registrationId");
@@ -202,7 +204,7 @@ SessionCipher.prototype = {
     var messageProto = messageBytes.slice(1, messageBytes.byteLength- 8);
     var mac = messageBytes.slice(messageBytes.byteLength - 8, messageBytes.byteLength);
 
-    var message = Internal.protobuf.WhisperMessage.decode(messageProto);
+    var message = protobuf.WhisperMessage.decode(messageProto);
     var remoteEphemeralKey = message.ephemeralKey.toArrayBuffer();
 
     if (session === undefined) {

@@ -3,6 +3,6 @@ mocha.setup("bdd");
 window.assert = chai.assert;
 
 require('./helpers_test.js');
-//require('./crypto_test.js');
+require('./crypto_test.js');
 require('./SessionCipherTest.js');
 
