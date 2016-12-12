@@ -19,3 +19,4 @@ require('./SignalProtocolStore_test.js')(
   testSessionStore
 );
 require('./SignalProtocolAddressTest.js');
+require('./IntegrationTest.js');

@@ -7,7 +7,11 @@ module.exports = function(grunt) {
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
     browserify: {
-      main: {
+      // main: {
+      //   src: 'src/main.js',
+      //   dest: 'dist/libsignal.js'
+      // },
+      test: {
         src: 'test/main.js',
         dest: 'build/test_main.js'
       }
@@ -19,10 +23,7 @@ module.exports = function(grunt) {
           'node_modules/bytebuffer/dist/ByteBufferAB.js',
           'node_modules/protobufjs/dist/protobuf.js'
         ],
-        dest: 'build/dcodeIO.js',
-        // options: {
-        //   footer: "module.exports = dcodeIO'];"
-        // }
+        dest: 'build/dcodeIO.js'
       },
       curve25519: {
         src: [
