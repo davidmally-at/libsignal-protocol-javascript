@@ -1,3 +1,10 @@
+var util = require('../src/helpers.js');
+
+var SessionLock = require('./SessionLock.js');
+var SessionRecord = require('./SessionRecord.js');
+var Crypto = require('./crypto.js');
+var ChainType = require('./ChainType.js');
+
 function SessionCipher(storage, remoteAddress) {
   this.remoteAddress = remoteAddress;
   this.storage = storage;
@@ -9,12 +16,12 @@ SessionCipher.prototype = {
           if (serialized === undefined) {
               return undefined;
           }
-          return Internal.SessionRecord.deserialize(serialized);
+          return SessionRecord.deserialize(serialized);
       });
   },
   encrypt: function(buffer, encoding) {
     buffer = dcodeIO.ByteBuffer.wrap(buffer, encoding).toArrayBuffer();
-    return Internal.SessionLock.queueJobForNumber(this.remoteAddress.toString(), function() {
+    return SessionLock.queueJobForNumber(this.remoteAddress.toString(), function() {
       if (!(buffer instanceof ArrayBuffer)) {
           throw new Error("Expected buffer to be an ArrayBuffer");
       }
@@ -44,13 +51,13 @@ SessionCipher.prototype = {
               session.currentRatchet.ephemeralKeyPair.pubKey
           );
           chain = session[util.toString(msg.ephemeralKey)];
-          if (chain.chainType === Internal.ChainType.RECEIVING) {
+          if (chain.chainType === ChainType.RECEIVING) {
               throw new Error("Tried to encrypt on a receiving chain");
           }
 
           return this.fillMessageKeys(chain, chain.chainKey.counter + 1);
       }.bind(this)).then(function() {
-          return Internal.HKDF(
+          return Crypto.HKDF(
               util.toArrayBuffer(chain.messageKeys[chain.chainKey.counter]),
               new ArrayBuffer(32), "WhisperMessageKeys");
       }).then(function(keys) {
@@ -58,7 +65,7 @@ SessionCipher.prototype = {
           msg.counter = chain.chainKey.counter;
           msg.previousCounter = session.currentRatchet.previousCounter;
 
-          return Internal.crypto.encrypt(
+          return Crypto.crypto.encrypt(
               keys[0], buffer, keys[2].slice(0, 16)
           ).then(function(ciphertext) {
               msg.ciphertext = ciphertext;
@@ -70,7 +77,7 @@ SessionCipher.prototype = {
               macInput[33*2] = (3 << 4) | 3;
               macInput.set(new Uint8Array(encodedMsg), 33*2 + 1);
 
-              return Internal.crypto.sign(keys[1], macInput.buffer).then(function(mac) {
+              return Crypto.crypto.sign(keys[1], macInput.buffer).then(function(mac) {
                   var result = new Uint8Array(encodedMsg.byteLength + 9);
                   result[0] = (3 << 4) | 3;
                   result.set(new Uint8Array(encodedMsg), 1);
@@ -128,7 +135,7 @@ SessionCipher.prototype = {
   },
   decryptWhisperMessage: function(buffer, encoding) {
       buffer = dcodeIO.ByteBuffer.wrap(buffer, encoding).toArrayBuffer();
-      return Internal.SessionLock.queueJobForNumber(this.remoteAddress.toString(), function() {
+      return SessionLock.queueJobForNumber(this.remoteAddress.toString(), function() {
         var address = this.remoteAddress.toString();
         return this.getRecord(address).then(function(record) {
             if (!record) {
@@ -152,7 +159,7 @@ SessionCipher.prototype = {
       if ((version & 0xF) > 3 || (version >> 4) < 3) {  // min version > 3 or max version < 3
           throw new Error("Incompatible version number on PreKeyWhisperMessage");
       }
-      return Internal.SessionLock.queueJobForNumber(this.remoteAddress.toString(), function() {
+      return SessionLock.queueJobForNumber(this.remoteAddress.toString(), function() {
           var address = this.remoteAddress.toString();
           return this.getRecord(address).then(function(record) {
               var preKeyProto = Internal.protobuf.PreKeyWhisperMessage.decode(buffer);
@@ -160,7 +167,7 @@ SessionCipher.prototype = {
                   if (preKeyProto.registrationId === undefined) {
                       throw new Error("No registrationId");
                   }
-                  record = new Internal.SessionRecord(
+                  record = new SessionRecord(
                       util.toString(preKeyProto.identityKey),
                       preKeyProto.registrationId
                   );
@@ -207,7 +214,7 @@ SessionCipher.prototype = {
 
     return this.maybeStepRatchet(session, remoteEphemeralKey, message.previousCounter).then(function() {
         var chain = session[util.toString(message.ephemeralKey)];
-        if (chain.chainType === Internal.ChainType.SENDING) {
+        if (chain.chainType === ChainType.SENDING) {
             throw new Error("Tried to decrypt on a sending chain");
         }
 
@@ -219,7 +226,7 @@ SessionCipher.prototype = {
                 throw e;
             }
             delete chain.messageKeys[message.counter];
-            return Internal.HKDF(util.toArrayBuffer(messageKey), new ArrayBuffer(32), "WhisperMessageKeys");
+            return Crypto.HKDF(util.toArrayBuffer(messageKey), new ArrayBuffer(32), "WhisperMessageKeys");
         });
     }.bind(this)).then(function(keys) {
         return this.storage.getIdentityKeyPair().then(function(ourIdentityKey) {
@@ -230,9 +237,9 @@ SessionCipher.prototype = {
             macInput[33*2] = (3 << 4) | 3;
             macInput.set(new Uint8Array(messageProto), 33*2 + 1);
 
-            return Internal.verifyMAC(macInput.buffer, keys[1], mac, 8);
+            return Crypto.verifyMAC(macInput.buffer, keys[1], mac, 8);
         }.bind(this)).then(function() {
-            return Internal.crypto.decrypt(keys[0], message.ciphertext.toArrayBuffer(), keys[2].slice(0, 16));
+            return Crypto.crypto.decrypt(keys[0], message.ciphertext.toArrayBuffer(), keys[2].slice(0, 16));
         });
     }.bind(this)).then(function(plaintext) {
         delete session.pendingPreKey;
@@ -256,9 +263,9 @@ SessionCipher.prototype = {
       var key = util.toArrayBuffer(chain.chainKey.key);
       var byteArray = new Uint8Array(1);
       byteArray[0] = 1;
-      return Internal.crypto.sign(key, byteArray.buffer).then(function(mac) {
+      return Crypto.crypto.sign(key, byteArray.buffer).then(function(mac) {
           byteArray[0] = 2;
-          return Internal.crypto.sign(key, byteArray.buffer).then(function(key) {
+          return Crypto.crypto.sign(key, byteArray.buffer).then(function(key) {
               chain.messageKeys[chain.chainKey.counter + 1] = mac;
               chain.chainKey.key = key;
               chain.chainKey.counter += 1;
@@ -294,7 +301,7 @@ SessionCipher.prototype = {
                   delete session[previousRatchet];
               }
 
-              return Internal.crypto.createKeyPair().then(function(keyPair) {
+              return Crypto.crypto.createKeyPair().then(function(keyPair) {
                   ratchet.ephemeralKeyPair = keyPair;
                   return this.calculateRatchet(session, remoteKey, true).then(function() {
                       ratchet.lastRemoteEphemeralKey = remoteKey;
@@ -306,8 +313,8 @@ SessionCipher.prototype = {
   calculateRatchet: function(session, remoteKey, sending) {
       var ratchet = session.currentRatchet;
 
-      return Internal.crypto.ECDHE(remoteKey, util.toArrayBuffer(ratchet.ephemeralKeyPair.privKey)).then(function(sharedSecret) {
-          return Internal.HKDF(sharedSecret, util.toArrayBuffer(ratchet.rootKey), "WhisperRatchet").then(function(masterKey) {
+      return Crypto.crypto.ECDHE(remoteKey, util.toArrayBuffer(ratchet.ephemeralKeyPair.privKey)).then(function(sharedSecret) {
+          return Crypto.HKDF(sharedSecret, util.toArrayBuffer(ratchet.rootKey), "WhisperRatchet").then(function(masterKey) {
               var ephemeralPublicKey;
               if (sending) {
                   ephemeralPublicKey = ratchet.ephemeralKeyPair.pubKey;
@@ -318,14 +325,14 @@ SessionCipher.prototype = {
               session[util.toString(ephemeralPublicKey)] = {
                   messageKeys: {},
                   chainKey: { counter: -1, key: masterKey[1] },
-                  chainType: sending ? Internal.ChainType.SENDING : Internal.ChainType.RECEIVING
+                  chainType: sending ? ChainType.SENDING : ChainType.RECEIVING
               };
               ratchet.rootKey = masterKey[0];
           });
       });
   },
   getRemoteRegistrationId: function() {
-    return Internal.SessionLock.queueJobForNumber(this.remoteAddress.toString(), function() {
+    return SessionLock.queueJobForNumber(this.remoteAddress.toString(), function() {
       return this.getRecord(this.remoteAddress.toString()).then(function(record) {
           if (record === undefined) {
               return undefined;
@@ -335,7 +342,7 @@ SessionCipher.prototype = {
     }.bind(this));
   },
   hasOpenSession: function() {
-    return Internal.SessionLock.queueJobForNumber(this.remoteAddress.toString(), function() {
+    return SessionLock.queueJobForNumber(this.remoteAddress.toString(), function() {
       return this.getRecord(this.remoteAddress.toString()).then(function(record) {
           if (record === undefined) {
               return false;
@@ -346,7 +353,7 @@ SessionCipher.prototype = {
   },
   closeOpenSessionForDevice: function() {
     var address = this.remoteAddress.toString();
-    return Internal.SessionLock.queueJobForNumber(address, function() {
+    return SessionLock.queueJobForNumber(address, function() {
       return this.getRecord(address).then(function(record) {
         if (record === undefined || record.getOpenSession() === undefined) {
             return;
@@ -359,7 +366,7 @@ SessionCipher.prototype = {
   }
 };
 
-libsignal.SessionCipher = function(storage, remoteAddress) {
+var mySessionCipher = function(storage, remoteAddress) {
     var cipher = new SessionCipher(storage, remoteAddress);
 
     // returns a Promise that resolves to a ciphertext object
@@ -376,3 +383,5 @@ libsignal.SessionCipher = function(storage, remoteAddress) {
     this.hasOpenSession = cipher.hasOpenSession.bind(cipher);
     this.closeOpenSessionForDevice = cipher.closeOpenSessionForDevice.bind(cipher);
 };
+
+module.exports = mySessionCipher;

@@ -6,7 +6,8 @@
 // TODO polyfill window.crypto for node?
 var crypto = window.crypto;
 
-var Curve = require('./Curve.js')
+var Curve = require('./Curve.js');
+var util = require('./helpers.js');
 
 if (!crypto || !crypto.subtle || typeof crypto.getRandomValues !== 'function') {
   throw new Error('WebCrypto not found');

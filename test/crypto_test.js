@@ -5,7 +5,7 @@
 'use strict';
 // window.assert = chai.assert;
 
-var Internal = require('../src/crypto.js');
+var Crypto = require('../src/crypto.js');
 
 describe("Crypto", function() {
     describe("Encrypt AES-CBC", function() {
@@ -14,7 +14,7 @@ describe("Crypto", function() {
             var iv = hexToArrayBuffer('000102030405060708090a0b0c0d0e0f');
             var plaintext  = hexToArrayBuffer('6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e5130c81c46a35ce411e5fbc1191a0a52eff69f2445df4f9b17ad2b417be66c3710');
             var ciphertext = hexToArrayBuffer('f58c4c04d6e5f1ba779eabfb5f7bfbd69cfc4e967edb808d679f777bc6702c7d39f23369a9d9bacfa530e26304231461b2eb05e2c39be9fcda6c19078c6a9d1b3f461796d6b0d6b2e0c2a72b4d80e644');
-            Internal.crypto.encrypt(key, plaintext, iv).then(function(result) {
+            Crypto.crypto.encrypt(key, plaintext, iv).then(function(result) {
                 assertEqualArrayBuffers(result, ciphertext);
             }).then(done).catch(done);
         });
@@ -26,7 +26,7 @@ describe("Crypto", function() {
             var iv = hexToArrayBuffer('000102030405060708090a0b0c0d0e0f');
             var plaintext  = hexToArrayBuffer('6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e5130c81c46a35ce411e5fbc1191a0a52eff69f2445df4f9b17ad2b417be66c3710');
             var ciphertext = hexToArrayBuffer('f58c4c04d6e5f1ba779eabfb5f7bfbd69cfc4e967edb808d679f777bc6702c7d39f23369a9d9bacfa530e26304231461b2eb05e2c39be9fcda6c19078c6a9d1b3f461796d6b0d6b2e0c2a72b4d80e644');
-            Internal.crypto.decrypt(key, ciphertext, iv).then(function(result) {
+            Crypto.crypto.decrypt(key, ciphertext, iv).then(function(result) {
                 assertEqualArrayBuffers(result, plaintext);
             }).then(done).catch(done);
         });
@@ -37,7 +37,7 @@ describe("Crypto", function() {
             var key = hexToArrayBuffer('6f35628d65813435534b5d67fbdb54cb33403d04e843103e6399f806cb5df95febbdd61236f33245');
             var input = hexToArrayBuffer('752cff52e4b90768558e5369e75d97c69643509a5e5904e0a386cbe4d0970ef73f918f675945a9aefe26daea27587e8dc909dd56fd0468805f834039b345f855cfe19c44b55af241fff3ffcd8045cd5c288e6c4e284c3720570b58e4d47b8feeedc52fd1401f698a209fccfa3b4c0d9a797b046a2759f82a54c41ccd7b5f592b');
             var mac = hexToArrayBuffer('05d1243e6465ed9620c9aec1c351a186');
-            Internal.crypto.sign(key, input).then(function(result) {
+            Crypto.crypto.sign(key, input).then(function(result) {
                 assertEqualArrayBuffers(result.slice(0, mac.byteLength), mac);
             }).then(done).catch(done);
         });
@@ -61,7 +61,7 @@ describe("Crypto", function() {
             for (var i = 0; i < 10; i++)
                 info[i] = 240 + i;
 
-            return Internal.crypto.HKDF(IKM.buffer, salt.buffer, info.buffer).then(function(OKM){
+            return Crypto.crypto.HKDF(IKM.buffer, salt.buffer, info.buffer).then(function(OKM){
                 assertEqualArrayBuffers(OKM[0], T1);
                 assertEqualArrayBuffers(OKM[1].slice(0, 10), T2);
             }).then(done).catch(done);
@@ -79,21 +79,21 @@ describe("Crypto", function() {
 
         describe("createKeyPair", function() {
             it ('converts alice private keys to a keypair', function(done) {
-                Internal.crypto.createKeyPair(alice_bytes).then(function(keypair) {
+                Crypto.crypto.createKeyPair(alice_bytes).then(function(keypair) {
                     assertEqualArrayBuffers(keypair.privKey, alice_priv);
                     assertEqualArrayBuffers(keypair.pubKey, alice_pub);
                     done();
                 }).catch(done);
             });
             it ('converts bob private keys to a keypair', function(done) {
-                Internal.crypto.createKeyPair(bob_bytes).then(function(keypair) {
+                Crypto.crypto.createKeyPair(bob_bytes).then(function(keypair) {
                     assertEqualArrayBuffers(keypair.privKey, bob_priv);
                     assertEqualArrayBuffers(keypair.pubKey, bob_pub);
                     done();
                 }).catch(done);
             });
             it ('generates a key if one is not provided', function(done) {
-                Internal.crypto.createKeyPair().then(function(keypair) {
+                Crypto.crypto.createKeyPair().then(function(keypair) {
                     assert.strictEqual(keypair.privKey.byteLength, 32);
                     assert.strictEqual(keypair.pubKey.byteLength, 33);
                     assert.strictEqual(new Uint8Array(keypair.pubKey)[0], 5);
@@ -104,13 +104,13 @@ describe("Crypto", function() {
 
         describe("ECDHE", function() {
             it("computes the shared secret for alice", function(done) {
-                Internal.crypto.ECDHE(bob_pub, alice_priv).then(function(secret) {
+                Crypto.crypto.ECDHE(bob_pub, alice_priv).then(function(secret) {
                     assertEqualArrayBuffers(shared_sec, secret);
                     done();
                 }).catch(done);
             });
             it("computes the shared secret for bob", function(done) {
-                Internal.crypto.ECDHE(alice_pub, bob_priv).then(function(secret) {
+                Crypto.crypto.ECDHE(alice_pub, bob_priv).then(function(secret) {
                     assertEqualArrayBuffers(shared_sec, secret);
                     done();
                 }).catch(done);
@@ -124,7 +124,7 @@ describe("Crypto", function() {
         describe("Ed25519Sign", function() {
             // Some self-generated test vectors
             it('works', function(done) {
-                return Internal.crypto.Ed25519Sign(priv, msg).then(function(sigCalc) {
+                return Crypto.crypto.Ed25519Sign(priv, msg).then(function(sigCalc) {
                     assertEqualArrayBuffers(sig, sigCalc);
                 }).then(done).catch(done);
             });
@@ -135,7 +135,7 @@ describe("Crypto", function() {
                 var badsig = sig.slice(0);
                 new Uint8Array(badsig).set([0], 0);
 
-                Internal.crypto.Ed25519Verify(pub, msg, badsig).catch(function(e) {
+                Crypto.crypto.Ed25519Verify(pub, msg, badsig).catch(function(e) {
                     if (e.message === 'Invalid signature') {
                     done();
                     } else { throw e; }
@@ -143,7 +143,7 @@ describe("Crypto", function() {
             });
 
             it("does not throw on good signature", function(done) {
-                return Internal.crypto.Ed25519Verify(pub, msg, sig).then(done).catch(done);
+                return Crypto.crypto.Ed25519Verify(pub, msg, sig).then(done).catch(done);
             });
         });
     }

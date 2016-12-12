@@ -54,7 +54,7 @@ var pushMessages     = dcodeIO.ProtoBuf.loadProto('package textsecure;\n' +
 '  optional uint32            flags       = 4;\n' +
 '}').build('textsecure');
 
-window.textsecure = {
+module.exports = {
     protobuf: {
         IncomingPushMessageSignal : pushMessages.IncomingPushMessageSignal,
         PushMessageContent        : pushMessages.PushMessageContent,

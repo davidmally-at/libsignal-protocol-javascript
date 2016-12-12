@@ -1,7 +1,6 @@
 /* vim: ts=4:sw=4 */
-var Internal = Internal || {};
 
-Internal.protobuf = function() {
+var protobuf = function() {
     'use strict';
 
     function loadProtoBufs(filename) {
@@ -15,3 +14,5 @@ Internal.protobuf = function() {
         PreKeyWhisperMessage      : protocolMessages.PreKeyWhisperMessage
     };
 }();
+
+module.exports = protobuf;

@@ -33,6 +33,8 @@ module.exports = function(grunt) {
           'protos/WhisperTextProtocol.proto'
         ],
         dest: 'build/protoText.js',
+        // TODO kill banner;
+        // TODO replace with footer that module.exports
         options: {
           banner: 'var Internal = Internal || {};\n\nInternal.protoText = function() {\n\tvar protoText = {};\n\n',
           footer: '\n\treturn protoText;\n}();',
