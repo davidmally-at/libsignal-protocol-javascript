@@ -24,9 +24,13 @@ module.exports = function(grunt) {
       curve25519: {
         src: [
           'build/curve25519_compiled.js',
-          'src/curve25519_wrapper.js',
         ],
-        dest: 'build/curve25519_concat.js'
+        dest: 'build/curve25519_concat.js',
+        // Append this to the build for browser require compatibility
+        // via https://github.com/nfroidure/ttf2woff2/blob/master/jssrc/post.js
+        options: {
+          footer: "module.exports = Module;\nModule.inspect = function() { return '[Module]'; };"
+        }
       },
       protos: {
         src: [
@@ -54,18 +58,18 @@ module.exports = function(grunt) {
         dest: 'build/protobufs_concat.js'
       },
 
-      worker: {
-        src: [
-          'build/curve25519_concat.js',
-          'src/curve25519_worker.js',
-        ],
-        dest: 'dist/libsignal-protocol-worker.js',
-        options: {
-          banner: ';(function(){\nvar Internal = {};\nvar libsignal = {};\n',
-          footer: '\n})();'
-        }
+      // worker: {
+      //   src: [
+      //     'build/curve25519_concat.js',
+      //     'src/curve25519_worker.js',
+      //   ],
+      //   dest: 'dist/libsignal-protocol-worker.js',
+      //   options: {
+      //     banner: ';(function(){\nvar Internal = {};\nvar libsignal = {};\n',
+      //     footer: '\n})();'
+      //   }
 
-      },
+      // },
       libsignalprotocol: {
         src: [
           'build/curve25519_concat.js',
@@ -146,10 +150,10 @@ module.exports = function(grunt) {
         // tasks: ['jshint']
         tasks: ['browserify']
       },
-      worker: {
-        files: ['<%= concat.worker.src %>'],
-        tasks: ['concat:worker']
-      },
+      // worker: {
+      //   files: ['<%= concat.worker.src %>'],
+      //   tasks: ['concat:worker']
+      // },
       libsignalprotocol: {
         files: ['<%= concat.libsignalprotocol.src %>'],
         tasks: ['concat:libsignalprotocol']

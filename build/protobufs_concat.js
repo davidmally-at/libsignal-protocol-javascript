@@ -46,8 +46,6 @@ module.exports = function protobuf () {
     return dcodeIO.ProtoBuf.loadProto(Internal.protoText['protos/' + filename]).build('textsecure');
   }
 
-  console.log(Internal.protoText)
-
   var protocolMessages = loadProtoBufs('WhisperTextProtocol.proto');
 
   return {

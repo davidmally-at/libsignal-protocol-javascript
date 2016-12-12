@@ -24651,165 +24651,15 @@ run();
 
 
 
-
-/* vim: ts=4:sw=4:expandtab */
-var Internal = Internal || {};
-
-(function() {
-    'use strict';
-
-    // Insert some bytes into the emscripten memory and return a pointer
-    function _allocate(bytes) {
-        var address = Module._malloc(bytes.length);
-        Module.HEAPU8.set(bytes, address);
-
-        return address;
-    }
-
-    function _readBytes(address, length, array) {
-        array.set(Module.HEAPU8.subarray(address, address + length));
-    }
-
-    var basepoint = new Uint8Array(32);
-    basepoint[0] = 9;
-
-    Internal.curve25519 = {
-        keyPair: function(privKey) {
-            var priv = new Uint8Array(privKey);
-            priv[0]  &= 248;
-            priv[31] &= 127;
-            priv[31] |= 64;
-
-            // Where to store the result
-            var publicKey_ptr = Module._malloc(32);
-
-            // Get a pointer to the private key
-            var privateKey_ptr = _allocate(priv);
-
-            // The basepoint for generating public keys
-            var basepoint_ptr = _allocate(basepoint);
-
-            // The return value is just 0, the operation is done in place
-            var err = Module._curve25519_donna(publicKey_ptr,
-                                            privateKey_ptr,
-                                            basepoint_ptr);
-
-            var res = new Uint8Array(32);
-            _readBytes(publicKey_ptr, 32, res);
-
-            Module._free(publicKey_ptr);
-            Module._free(privateKey_ptr);
-            Module._free(basepoint_ptr);
-
-            return { pubKey: res.buffer, privKey: priv.buffer };
-        },
-        sharedSecret: function(pubKey, privKey) {
-            // Where to store the result
-            var sharedKey_ptr = Module._malloc(32);
-
-            // Get a pointer to our private key
-            var privateKey_ptr = _allocate(new Uint8Array(privKey));
-
-            // Get a pointer to their public key, the basepoint when you're
-            // generating a shared secret
-            var basepoint_ptr = _allocate(new Uint8Array(pubKey));
-
-            // Return value is 0 here too of course
-            var err = Module._curve25519_donna(sharedKey_ptr,
-                                               privateKey_ptr,
-                                               basepoint_ptr);
-
-            var res = new Uint8Array(32);
-            _readBytes(sharedKey_ptr, 32, res);
-
-            Module._free(sharedKey_ptr);
-            Module._free(privateKey_ptr);
-            Module._free(basepoint_ptr);
-
-            return res.buffer;
-        },
-        sign: function(privKey, message) {
-            // Where to store the result
-            var signature_ptr = Module._malloc(64);
-
-            // Get a pointer to our private key
-            var privateKey_ptr = _allocate(new Uint8Array(privKey));
-
-            // Get a pointer to the message
-            var message_ptr = _allocate(new Uint8Array(message));
-
-            var err = Module._curve25519_sign(signature_ptr,
-                                              privateKey_ptr,
-                                              message_ptr,
-                                              message.byteLength);
-
-            var res = new Uint8Array(64);
-            _readBytes(signature_ptr, 64, res);
-
-            Module._free(signature_ptr);
-            Module._free(privateKey_ptr);
-            Module._free(message_ptr);
-
-            return res.buffer;
-        },
-        verify: function(pubKey, message, sig) {
-            // Get a pointer to their public key
-            var publicKey_ptr = _allocate(new Uint8Array(pubKey));
-
-            // Get a pointer to the signature
-            var signature_ptr = _allocate(new Uint8Array(sig));
-
-            // Get a pointer to the message
-            var message_ptr = _allocate(new Uint8Array(message));
-
-            var res = Module._curve25519_verify(signature_ptr,
-                                                publicKey_ptr,
-                                                message_ptr,
-                                                message.byteLength);
-
-            Module._free(publicKey_ptr);
-            Module._free(signature_ptr);
-            Module._free(message_ptr);
-
-            return res !== 0;
-        }
-    };
-
-    Internal.curve25519_async = {
-        keyPair: function(privKey) {
-            return new Promise(function(resolve) {
-                resolve(Internal.curve25519.keyPair(privKey));
-            });
-        },
-        sharedSecret: function(pubKey, privKey) {
-            return new Promise(function(resolve) {
-                resolve(Internal.curve25519.sharedSecret(pubKey, privKey));
-            });
-        },
-        sign: function(privKey, message) {
-            return new Promise(function(resolve) {
-                resolve(Internal.curve25519.sign(privKey, message));
-            });
-        },
-        verify: function(pubKey, message, sig) {
-            return new Promise(function(resolve, reject) {
-                if (Internal.curve25519.verify(pubKey, message, sig)) {
-                    reject(new Error("Invalid signature"));
-                } else {
-                    resolve();
-                }
-            });
-        },
-    };
-
-})();
-
-;(function() {
-
+module.exports = Module;
+Module.inspect = function() { return '[Module]'; };
 'use strict';
 
+var work = require('webworkify');
+var Internal = {}
+
 // I am the...workee?
-var origCurve25519 = Internal.curve25519_async;
+var origCurve25519 = require('./curve25519_wrapper2.js')//Internal.curve25519_async;
 
 Internal.startWorker = function(url) {
     Internal.stopWorker(); // there can be only one
@@ -24824,15 +24674,11 @@ Internal.stopWorker = function() {
     }
 };
 
-libsignal.worker = {
-  startWorker: Internal.startWorker,
-  stopWorker: Internal.stopWorker,
-};
-
-function Curve25519Worker(url) {
+function Curve25519Worker() {
     this.jobs = {};
     this.jobId = 0;
-    this.worker = new Worker(url);
+    this.worker = work(require('./curve25519_worker.js'));
+    // this.worker = new Worker(url);
     this.worker.onmessage = function(e) {
         var job = this.jobs[e.data.id];
         if (e.data.error && typeof job.onerror === 'function') {
@@ -24867,7 +24713,7 @@ Curve25519Worker.prototype = {
     }
 };
 
-})();
+module.exports = Internal;
 
 /*
  Copyright 2013 Daniel Wirtz <dcode@dcode.io>
@@ -34599,6 +34445,9 @@ Curve25519Worker.prototype = {
 
 'use strict';
 
+var Crypto = require('crypto');
+var CurveWrapper = require('./curve25519_wrapper2.js');
+
 function validatePrivKey(privKey) {
   if (privKey === undefined || !(privKey instanceof ArrayBuffer) || privKey.byteLength != 32) {
     throw new Error("Invalid private key");
@@ -34681,7 +34530,7 @@ function wrapCurve25519(curve25519) {
 function wrapCurve(curve) {
   return {
     generateKeyPair: function() {
-      var privKey = Internal.crypto.getRandomBytes(32);
+      var privKey = Crypto.crypto.getRandomBytes(32);
       return curve.createKeyPair(privKey);
     },
     createKeyPair: function(privKey) {
@@ -34699,8 +34548,8 @@ function wrapCurve(curve) {
   };
 }
 
-var curve = wrapCurve25519(Internal.curve25519);
-var async = wrapCurve25519(Internal.curve25519_async);
+var curve = wrapCurve25519(CurveWrapper.curve25519);
+var async = wrapCurve25519(CurveWrapper.curve25519_async);
 var libsignal_Curve = wrapCurve(curve);
 var libsignal_Curve_async = wrapCurve(async);
 
@@ -34708,7 +34557,7 @@ module.exports = {
   Curve:                 curve,
   async:                 async,
   libsignal_Curve:       libsignal_Curve,
-  libsignal_Curve_async: libsignal_Curve_async 
+  libsignal_Curve_async: libsignal_Curve_async
 };
 
 /*
@@ -34907,17 +34756,19 @@ var util = {
 
 module.exports = util;
 
+var Crypto = require('./crypto.js');
+
 function isNonNegativeInteger(n) {
     return (typeof n === 'number' && (n % 1) === 0  && n >= 0);
 }
 
 var KeyHelper = {
     generateIdentityKeyPair: function() {
-        return Internal.crypto.createKeyPair();
+        return Crypto.crypto.createKeyPair();
     },
 
     generateRegistrationId: function() {
-        var registrationId = new Uint16Array(Internal.crypto.getRandomBytes(2))[0];
+        var registrationId = new Uint16Array(Crypto.crypto.getRandomBytes(2))[0];
         return registrationId & 0x3fff;
     },
 
@@ -34934,8 +34785,8 @@ var KeyHelper = {
             );
         }
 
-        return Internal.crypto.createKeyPair().then(function(keyPair) {
-            return Internal.crypto.Ed25519Sign(identityKeyPair.privKey, keyPair.pubKey).then(function(sig) {
+        return Crypto.crypto.createKeyPair().then(function(keyPair) {
+            return Crypto.crypto.Ed25519Sign(identityKeyPair.privKey, keyPair.pubKey).then(function(sig) {
                 return {
                     keyId      : signedKeyId,
                     keyPair    : keyPair,
@@ -34950,13 +34801,13 @@ var KeyHelper = {
             throw new TypeError('Invalid argument for keyId: ' + keyId);
         }
 
-        return Internal.crypto.createKeyPair().then(function(keyPair) {
+        return Crypto.crypto.createKeyPair().then(function(keyPair) {
             return { keyId: keyId, keyPair: keyPair };
         });
     }
 };
 
-libsignal.KeyHelper = KeyHelper;
+module.exports = KeyHelper;
 
 var Internal = Internal || {};
 
@@ -35329,7 +35180,7 @@ var Crypto = require('./crypto.js');
 var SessionRecord = require('./SessionRecord.js');
 var ChainType = require('./ChainType.js');
 var BaseKeyType = require('./BaseKeyType.js');
-var util = require('./helpers.js')
+var util = require('./helpers.js');
 
 function SessionBuilder(storage, remoteAddress) {
   this.remoteAddress = remoteAddress;
@@ -35559,8 +35410,10 @@ var util = require('../src/helpers.js');
 
 var SessionLock = require('./SessionLock.js');
 var SessionRecord = require('./SessionRecord.js');
+var SessionBuilder = require('./SessionBuilder.js');
 var Crypto = require('./crypto.js');
 var ChainType = require('./ChainType.js');
+var protobuf = require('../build/protobufs_concat.js');
 
 function SessionCipher(storage, remoteAddress) {
   this.remoteAddress = remoteAddress;
@@ -35586,7 +35439,7 @@ SessionCipher.prototype = {
       var address = this.remoteAddress.toString();
       var ourIdentityKey, myRegistrationId, record, session, chain;
 
-      var msg = new Internal.protobuf.WhisperMessage();
+      var msg = new protobuf.WhisperMessage();
 
       return Promise.all([
           this.storage.getIdentityKeyPair(),
@@ -35648,7 +35501,7 @@ SessionCipher.prototype = {
           }.bind(this));
       }.bind(this)).then(function(message) {
           if (session.pendingPreKey !== undefined) {
-              var preKeyMsg = new Internal.protobuf.PreKeyWhisperMessage();
+              var preKeyMsg = new protobuf.PreKeyWhisperMessage();
               preKeyMsg.identityKey = util.toArrayBuffer(ourIdentityKey.pubKey);
               preKeyMsg.registrationId = myRegistrationId;
 
@@ -35719,7 +35572,7 @@ SessionCipher.prototype = {
       return SessionLock.queueJobForNumber(this.remoteAddress.toString(), function() {
           var address = this.remoteAddress.toString();
           return this.getRecord(address).then(function(record) {
-              var preKeyProto = Internal.protobuf.PreKeyWhisperMessage.decode(buffer);
+              var preKeyProto = protobuf.PreKeyWhisperMessage.decode(buffer);
               if (!record) {
                   if (preKeyProto.registrationId === undefined) {
                       throw new Error("No registrationId");
@@ -35759,7 +35612,7 @@ SessionCipher.prototype = {
     var messageProto = messageBytes.slice(1, messageBytes.byteLength- 8);
     var mac = messageBytes.slice(messageBytes.byteLength - 8, messageBytes.byteLength);
 
-    var message = Internal.protobuf.WhisperMessage.decode(messageProto);
+    var message = protobuf.WhisperMessage.decode(messageProto);
     var remoteEphemeralKey = message.ephemeralKey.toArrayBuffer();
 
     if (session === undefined) {
@@ -35966,76 +35819,77 @@ SessionLock.queueJobForNumber = function queueJobForNumber(number, runJob) {
 
 module.exports = SessionLock;
 
-(function() {
-    var VERSION = 0;
+var VERSION = 0;
 
-    function iterateHash(data, key, count) {
-        data = dcodeIO.ByteBuffer.concat([data, key]).toArrayBuffer();
-        return Internal.crypto.hash(data).then(function(result) {
-            if (--count === 0) {
-                return result;
-            } else {
-                return iterateHash(result, key, count);
-            }
-        });
+var Crypto = require('./crypto.js');
+
+function iterateHash(data, key, count) {
+  data = dcodeIO.ByteBuffer.concat([data, key]).toArrayBuffer();
+  return Crypto.crypto.hash(data).then(function(result) {
+    if (--count === 0) {
+      return result;
+    } else {
+      return iterateHash(result, key, count);
+    }
+  });
+}
+
+function shortToArrayBuffer(number) {
+  return new Uint16Array([number]).buffer;
+}
+
+function getEncodedChunk(hash, offset) {
+  var chunk = ( hash[offset]   * Math.pow(2,32) +
+                hash[offset+1] * Math.pow(2,24) +
+                hash[offset+2] * Math.pow(2,16) +
+                hash[offset+3] * Math.pow(2,8) +
+                hash[offset+4] ) % 100000;
+  var s = chunk.toString();
+  while (s.length < 5) {
+    s = '0' + s;
+  }
+  return s;
+}
+
+function getDisplayStringFor(identifier, key, iterations) {
+  var bytes = dcodeIO.ByteBuffer.concat([
+    shortToArrayBuffer(VERSION), key, identifier
+  ]).toArrayBuffer();
+  return iterateHash(bytes, key, iterations).then(function(output) {
+    output = new Uint8Array(output);
+    return getEncodedChunk(output, 0) +
+      getEncodedChunk(output, 5) +
+      getEncodedChunk(output, 10) +
+      getEncodedChunk(output, 15) +
+      getEncodedChunk(output, 20) +
+      getEncodedChunk(output, 25);
+  });
+}
+
+var FingerprintGenerator = function(iterations) {
+  this.iterations = iterations;
+};
+
+FingerprintGenerator.prototype = {
+  createFor: function(localIdentifier, localIdentityKey,
+                      remoteIdentifier, remoteIdentityKey) {
+    if (typeof localIdentifier !== 'string' ||
+        typeof remoteIdentifier !== 'string' ||
+        !(localIdentityKey instanceof ArrayBuffer) ||
+        !(remoteIdentityKey instanceof ArrayBuffer)) {
+
+      throw new Error('Invalid arguments');
     }
 
-    function shortToArrayBuffer(number) {
-        return new Uint16Array([number]).buffer;
-    }
+    return Promise.all([
+      getDisplayStringFor(localIdentifier, localIdentityKey, this.iterations),
+      getDisplayStringFor(remoteIdentifier, remoteIdentityKey, this.iterations)
+    ]).then(function(fingerprints) {
+      return fingerprints.sort().join('');
+    });
+  }
+};
 
-    function getEncodedChunk(hash, offset) {
-        var chunk = ( hash[offset]   * Math.pow(2,32) +
-                      hash[offset+1] * Math.pow(2,24) +
-                      hash[offset+2] * Math.pow(2,16) +
-                      hash[offset+3] * Math.pow(2,8) +
-                      hash[offset+4] ) % 100000;
-        var s = chunk.toString();
-        while (s.length < 5) {
-            s = '0' + s;
-        }
-        return s;
-    }
-
-    function getDisplayStringFor(identifier, key, iterations) {
-        var bytes = dcodeIO.ByteBuffer.concat([
-            shortToArrayBuffer(VERSION), key, identifier
-        ]).toArrayBuffer();
-        return iterateHash(bytes, key, iterations).then(function(output) {
-            output = new Uint8Array(output);
-            return getEncodedChunk(output, 0) +
-                getEncodedChunk(output, 5) +
-                getEncodedChunk(output, 10) +
-                getEncodedChunk(output, 15) +
-                getEncodedChunk(output, 20) +
-                getEncodedChunk(output, 25);
-        });
-    }
-
-    libsignal.FingerprintGenerator = function(iterations) {
-        this.iterations = iterations;
-    };
-    libsignal.FingerprintGenerator.prototype = {
-        createFor: function(localIdentifier, localIdentityKey,
-                            remoteIdentifier, remoteIdentityKey) {
-            if (typeof localIdentifier !== 'string' ||
-                typeof remoteIdentifier !== 'string' ||
-                !(localIdentityKey instanceof ArrayBuffer) ||
-                !(remoteIdentityKey instanceof ArrayBuffer)) {
-
-              throw new Error('Invalid arguments');
-            }
-
-            return Promise.all([
-                getDisplayStringFor(localIdentifier, localIdentityKey, this.iterations),
-                getDisplayStringFor(remoteIdentifier, remoteIdentityKey, this.iterations)
-            ]).then(function(fingerprints) {
-                return fingerprints.sort().join('');
-            });
-        }
-    };
-
-})();
-
+module.exports = FingerprintGenerator;
 
 })();

@@ -1,6 +1,7 @@
 'use strict';
 
 var Crypto = require('crypto');
+var CurveWrapper = require('./curve25519_wrapper2.js');
 
 function validatePrivKey(privKey) {
   if (privKey === undefined || !(privKey instanceof ArrayBuffer) || privKey.byteLength != 32) {
@@ -102,8 +103,8 @@ function wrapCurve(curve) {
   };
 }
 
-var curve = wrapCurve25519(Internal.curve25519);
-var async = wrapCurve25519(Internal.curve25519_async);
+var curve = wrapCurve25519(CurveWrapper.curve25519);
+var async = wrapCurve25519(CurveWrapper.curve25519_async);
 var libsignal_Curve = wrapCurve(curve);
 var libsignal_Curve_async = wrapCurve(async);
 
