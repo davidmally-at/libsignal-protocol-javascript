@@ -1,6 +1,5 @@
 /* vim: ts=4:sw=4 */
+mocha.setup("bdd");
+window.assert = chai.assert;
 
-'use strict';
-
-console.log('test suite!')
-require('./helpers_test.js')
+require('./helpers_test.js');

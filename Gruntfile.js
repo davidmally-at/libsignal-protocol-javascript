@@ -9,7 +9,7 @@ module.exports = function(grunt) {
     browserify: {
       main: {
         src: 'test/main.js',
-        dest: 'build/test-suite-browserify.js'
+        dest: 'build/test_main.js'
       }
     },
     concat: {
