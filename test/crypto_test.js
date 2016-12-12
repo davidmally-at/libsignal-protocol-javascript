@@ -3,7 +3,9 @@
  */
 
 'use strict';
-window.assert = chai.assert;
+// window.assert = chai.assert;
+
+var Internal = require('../src/crypto.js');
 
 describe("Crypto", function() {
     describe("Encrypt AES-CBC", function() {
