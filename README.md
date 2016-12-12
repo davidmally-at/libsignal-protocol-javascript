@@ -70,11 +70,15 @@ types/interfaces, which are available in most modern browsers.
 
 ## Usage
 
-Require with browserify (or your front-end bundler of choice):
+There are two ways to use this package.
+
+You can require with your front-end bundler of choice (e.g. browserify, webpack):
 
 ```js
 var libsignal = require('libsignal-protocol')
 ```
+
+Or, you can include the prebundled `dist/libsignal.js` in your HTML file.
 
 ### Install time
 

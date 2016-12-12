@@ -7,10 +7,10 @@ module.exports = function(grunt) {
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
     browserify: {
-      // main: {
-      //   src: 'src/main.js',
-      //   dest: 'dist/libsignal.js'
-      // },
+      legacy: {
+        src: 'src/main_window.js',
+        dest: 'dist/libsignal.js'
+      },
       test: {
         src: 'test/main.js',
         dest: 'build/test_main.js'
