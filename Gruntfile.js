@@ -58,43 +58,32 @@ module.exports = function(grunt) {
         dest: 'build/protobufs_concat.js'
       },
 
-      // worker: {
+      // TODO build a dist or nah?
+      // libsignalprotocol: {
       //   src: [
       //     'build/curve25519_concat.js',
-      //     'src/curve25519_worker.js',
+      //     'src/curve25519_worker_manager.js',
+      //     'build/components_concat.js',
+
+      //     'src/Curve.js',
+      //     'src/crypto.js',
+      //     'src/helpers.js',
+      //     'src/KeyHelper.js',
+      //     'build/protobufs_concat.js',
+      //     'src/SessionRecord.js',
+      //     'src/SignalProtocolAddress.js',
+      //     'src/SessionBuilder.js',
+      //     'src/SessionCipher.js',
+      //     'src/SessionLock.js',
+      //     'src/NumericFingerprint.js'
       //   ],
-      //   dest: 'dist/libsignal-protocol-worker.js',
+      //   dest: 'dist/libsignal-protocol.js',
       //   options: {
-      //     banner: ';(function(){\nvar Internal = {};\nvar libsignal = {};\n',
+      //     banner: ';(function(){\nvar Internal = {};\nwindow.libsignal = {};\n',
       //     footer: '\n})();'
       //   }
 
       // },
-      libsignalprotocol: {
-        src: [
-          'build/curve25519_concat.js',
-          'src/curve25519_worker_manager.js',
-          'build/components_concat.js',
-
-          'src/Curve.js',
-          'src/crypto.js',
-          'src/helpers.js',
-          'src/KeyHelper.js',
-          'build/protobufs_concat.js',
-          'src/SessionRecord.js',
-          'src/SignalProtocolAddress.js',
-          'src/SessionBuilder.js',
-          'src/SessionCipher.js',
-          'src/SessionLock.js',
-          'src/NumericFingerprint.js'
-        ],
-        dest: 'dist/libsignal-protocol.js',
-        options: {
-          banner: ';(function(){\nvar Internal = {};\nwindow.libsignal = {};\n',
-          footer: '\n})();'
-        }
-
-      },
       test: {
         src: [
           'node_modules/mocha/mocha.js',
@@ -103,10 +92,10 @@ module.exports = function(grunt) {
           'node_modules/blanket/dist/mocha/blanket_mocha.js',
           'test/_test.js'
         ],
-        dest: 'test/test.js',
-        options: {
-          banner: 'var Internal = {};\nwindow.libsignal = {};\n'
-        }
+        dest: 'build/test_lib.js'
+        // options: {
+        //   banner: 'var Internal = {};\nwindow.libsignal = {};\n'
+        // }
       }
     },
     compile: {
@@ -146,9 +135,7 @@ module.exports = function(grunt) {
     watch: {
       jshint: {
         files: ['<%= jshint.files %>', '.jshintrc'],
-        // HACK
-        // tasks: ['jshint']
-        tasks: ['browserify']
+        tasks: ['jshint']
       },
       // worker: {
       //   files: ['<%= concat.worker.src %>'],
