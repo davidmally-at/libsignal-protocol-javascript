@@ -3,6 +3,7 @@
  */
 
 var util = require('./helpers.js');
+var dcodeIO = require('../build/dcodeIO.js');
 
 var BaseKeyType = require('./BaseKeyType.js');
 

@@ -41,9 +41,10 @@ Internal.protoText = function() {
 //    { WhisperMessage, PreKeyWhisperMessage }
 module.exports = function protobuf () {
   'use strict';
+  var dcodeIO = require('../build/dcodeIO.js');
 
   function loadProtoBufs(filename) {
-    return dcodeIO.ProtoBuf.loadProto(Internal.protoText['protos/' + filename]).build('textsecure');
+    return dcodeIO.loadProto(Internal.protoText['protos/' + filename]).build('textsecure');
   }
 
   var protocolMessages = loadProtoBufs('WhisperTextProtocol.proto');

@@ -4,6 +4,7 @@
 'use strict';
 
 
+var dcodeIO = require('../build/dcodeIO.js');
 var StaticArrayBufferProto = new ArrayBuffer().__proto__;
 
 function toString (thing) {

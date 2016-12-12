@@ -6,6 +6,7 @@ var SessionBuilder = require('./SessionBuilder.js');
 var Crypto = require('./crypto.js');
 var ChainType = require('./ChainType.js');
 var protobuf = require('../build/protobufs_concat.js');
+var dcodeIO = require('../build/dcodeIO.js');
 
 function SessionCipher(storage, remoteAddress) {
   this.remoteAddress = remoteAddress;

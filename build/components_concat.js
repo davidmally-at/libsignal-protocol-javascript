@@ -9725,3 +9725,4 @@
 
     return ProtoBuf;
 });
+module.exports = dcodeIO;

@@ -8,6 +8,8 @@ var crypto = window.crypto;
 
 var Curve = require('./Curve.js');
 var util = require('./helpers.js');
+var dcodeIO = require('../build/dcodeIO.js');
+console.log(dcodeIO)
 
 if (!crypto || !crypto.subtle || typeof crypto.getRandomValues !== 'function') {
   throw new Error('WebCrypto not found');
