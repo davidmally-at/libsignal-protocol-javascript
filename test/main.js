@@ -18,4 +18,4 @@ require('./SignalProtocolStore_test.js')(
   testSignedPreKeyStore,
   testSessionStore
 );
-// require('./SignalProtocolAddressTest.js');
+require('./SignalProtocolAddressTest.js');
