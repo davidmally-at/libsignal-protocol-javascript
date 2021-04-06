@@ -3,8 +3,9 @@
  */
 'use strict';
 
-// TODO polyfill window.crypto for node?
-var crypto = window.crypto;
+// webcrypto shim for node
+const { Crypto } = require('@peculiar/webcrypto');
+const crypto = new Crypto();
 
 var Curve = require('./Curve.js');
 var util = require('./helpers.js');

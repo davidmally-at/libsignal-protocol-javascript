@@ -5,6 +5,7 @@
   "main": "src/main.js",
   "license": "GPL-3.0",
   "dependencies": {
+    "@peculiar/webcrypto": "^1.1.6",
     "bytebuffer": "^3.5.5",
     "long": "^3.1.0",
     "protobufjs": "5.0.1",
