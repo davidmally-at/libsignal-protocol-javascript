@@ -198,5 +198,5 @@ module.exports = function(grunt) {
   grunt.registerTask('dev', ['connect', 'watch']);
   grunt.registerTask('test', ['jshint', 'jscs', 'connect', 'saucelabs-mocha']);
   grunt.registerTask('default', ['concat']);
-  grunt.registerTask('build', ['compile', 'concat', 'browserify']);
+  grunt.registerTask('build', ['compile', 'concat']);
 };
